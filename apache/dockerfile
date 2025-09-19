@@ -33,8 +33,6 @@ RUN mkdir /var/run/sshd && \
 COPY index.html /var/www/html/index.html
 
 # Expose SSH port
-EXPOSE 22
-EXPOSE 80
-
+EXPOSE 22 80
 # Start services: rsyslog and sshd
-CMD ["sh", "-c", "rsyslogd && /usr/sbin/sshd -D & exec /usr/sbin/apache2ctl -D FOREGROUND"]
+CMD ["sh","-c","rsyslogd && /usr/sbin/sshd & exec /usr/sbin/apache2ctl -D FOREGROUND"]

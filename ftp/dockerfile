@@ -1,0 +1,39 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install packages
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    vsftpd \
+    ftp \
+    rsyslog \
+    net-tools \
+    iproute2 \
+    iputils-ping \
+    vim \
+    nano \
+    curl \
+    wget \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup SSH (root password: pass)
+RUN mkdir -p /var/run/sshd && \
+    echo "root:pass" | chpasswd && \
+    sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Simple FTP user
+RUN useradd -m ftpuser && echo "ftpuser:ftp123" | chpasswd
+
+# Minimal vsftpd config
+COPY vsftpd.conf /etc/vsftpd.conf
+
+# Entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+EXPOSE 21 22
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
