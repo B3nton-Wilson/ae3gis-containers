@@ -1,0 +1,40 @@
+# Dockerfile for apache web-server
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install basic Ubuntu packages
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    rsyslog \
+    net-tools \
+    iproute2 \
+    iputils-ping \
+    tcpdump \
+    vim \
+    nano \
+    curl \
+    wget \
+    procps \
+    dnsutils \
+    nmap \
+    netcat-openbsd \
+    isc-dhcp-client \
+    apache2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# SSH setup: root password + allow root/password login
+RUN mkdir /var/run/sshd && \
+    echo 'root:pass' | chpasswd && \
+    sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#\?UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
+
+COPY index.html /var/www/html/index.html
+
+# Expose SSH port
+EXPOSE 22
+EXPOSE 80
+
+# Start services: rsyslog and sshd
+CMD ["sh", "-c", "rsyslogd && /usr/sbin/sshd -D & exec /usr/sbin/apache2ctl -D FOREGROUND"]
