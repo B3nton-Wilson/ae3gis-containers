@@ -1,39 +1,42 @@
-FROM ubuntu:24.04
+FROM alpine:3.22.1
 
-ENV DEBIAN_FRONTEND=noninteractive
+ENV FTP_USER=ae3gis \
+    FTP_PASS=ae3gis123 \
+    GID=1000 \
+    UID=1000 \
+    PUBLIC_IP=0.0.0.0
 
-# Install packages
-RUN apt-get update && apt-get install -y \
-    openssh-server \
-    vsftpd \
-    ftp \
-    rsyslog \
-    net-tools \
-    iproute2 \
-    iputils-ping \
-    vim \
-    nano \
-    curl \
-    wget \
-    procps \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache --update \
+      vsftpd=3.0.5-r2 \
+      openssh \
+      rsyslog \
+      net-tools \
+      iproute2 \
+      iputils \
+      tcpdump \
+      vim \
+      nano \
+      curl \
+      wget \
+      bash
 
-# Setup SSH (root password: pass)
-RUN mkdir -p /var/run/sshd && \
-    echo "root:pass" | chpasswd && \
+# --- SSH server setup ---
+# Generate host keys at build time
+RUN ssh-keygen -A && \
+    mkdir -p /var/run/sshd && \
+    echo 'root:pass' | chpasswd && \
     sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    # PAM isn't used in Alpine's OpenSSH, but make sure it's disabled
+    sed -i 's/^#\?UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
 
-# Simple FTP user
-RUN useradd -m ftpuser && echo "ftpuser:ftp123" | chpasswd
-
-# Minimal vsftpd config
 COPY vsftpd.conf /etc/vsftpd.conf
-
-# Entrypoint script
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 21 22
+ENTRYPOINT [ "/docker-entrypoint.sh" ]
+CMD [ "/usr/sbin/vsftpd" ]
+# Expose FTP and SSH ports
+EXPOSE 20/tcp 21/tcp 22/tcp 40000-40009/tcp
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+HEALTHCHECK CMD netstat -lnt | grep :21 || exit 1
