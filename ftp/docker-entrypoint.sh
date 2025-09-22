@@ -15,9 +15,12 @@ echo "$FTP_USER:$FTP_PASS" | /usr/sbin/chpasswd
 
 sed -i -r "s/0.0.0.0/$PUBLIC_IP/g" /etc/vsftpd.conf
 
+rsyslogd
+/usr/sbin/sshd
+
 touch /var/log/vsftpd.log
-tail -f /var/log/vsftpd.log | tee /dev/stdout &
+#tail -f /var/log/vsftpd.log | tee /dev/stdout &
 touch /var/log/xferlog
-tail -f /var/log/xferlog | tee /dev/stdout &
+#tail -f /var/log/xferlog | tee /dev/stdout &
 
 exec "$@"

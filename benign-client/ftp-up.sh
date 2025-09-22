@@ -6,8 +6,8 @@ USER="ae3gis"
 PASS="ae3gis123"
 IFACE="eth0"
 PORT=21
-MIN=30
-MAX=120
+MIN=10
+MAX=30
 REMOTE_CD=""   # e.g. "/home/ftpuser" or leave empty to skip
 
 # get IPv4 of IFACE using ifconfig (as requested)
