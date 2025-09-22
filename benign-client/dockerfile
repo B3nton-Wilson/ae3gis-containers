@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y \
     nmap \
     netcat-openbsd \
     isc-dhcp-client \
+    cifs-utils \
+    smbclient \
     && rm -rf /var/lib/apt/lists/*
 
 # SSH setup: root password + allow root/password login
