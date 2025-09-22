@@ -8,8 +8,33 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PASV_MAX=21010 \
     PASV_ADDRESS=0.0.0.0
 
-RUN apt-get update && apt-get install -y --no-install-recommends pure-ftpd && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      pure-ftpd \
+      openssh-server \
+      ftp \
+      mailutils \
+      swaks \
+      rsyslog \
+      net-tools \
+      iproute2 \
+      iputils-ping \
+      tcpdump \
+      vim \
+      nano \
+      curl \
+      wget \
+      procps \
+      dnsutils \
+      nmap \
+      netcat-openbsd \
+      isc-dhcp-client \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /var/run/sshd && \
+    echo 'root:pass' | chpasswd && \
+    sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#\?UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
 
 # Create local user with a VALID shell
 RUN useradd -m -d /home/${FTP_USER} -s /bin/bash ${FTP_USER} && \
@@ -23,13 +48,9 @@ RUN mkdir -p /home/${FTP_USER}/ftp && \
     chown root:root /home/${FTP_USER} && \
     chmod 755 /home/${FTP_USER}
 
-EXPOSE 21 ${PASV_MIN}-${PASV_MAX}
+COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-CMD exec /usr/sbin/pure-ftpd \
-      -l unix \
-      -E \
-      -j \
-      -c 50 \
-      -C 5 \
-      -p ${PASV_MIN}:${PASV_MAX} \
-      -P ${PASV_ADDRESS}
+EXPOSE 21 ${PASV_MIN}-${PASV_MAX} 22
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -2,13 +2,13 @@
 set -euo pipefail
 
 # --- CONFIG: change these ---
-USER="ae3gis"
-PASS="ae3gis123"
+USER="ftpuser"
+PASS="ftppass"
 IFACE="eth0"
 PORT=21
 MIN=10
 MAX=30
-REMOTE_CD=""   # e.g. "/home/ftpuser" or leave empty to skip
+REMOTE_CD="/home/ftpuser/ftp"   # e.g. "/home/ftpuser" or leave empty to skip
 
 # get IPv4 of IFACE using ifconfig (as requested)
 IP=$(ifconfig "$IFACE" 2>/dev/null | awk '/inet /{print $2; exit}')
@@ -65,6 +65,7 @@ EOF
 user $USER $PASS
 binary
 passive
+cd $REMOTE_CD
 put $LOCAL_FILE $REMOTE_FILENAME
 bye
 EOF
