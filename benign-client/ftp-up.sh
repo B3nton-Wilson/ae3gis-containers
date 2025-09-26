@@ -10,31 +10,6 @@ MIN=10
 MAX=30
 REMOTE_CD="/home/ftpuser/ftp"   # e.g. "/home/ftpuser" or leave empty to skip
 
-# get IPv4 of IFACE using ifconfig (as requested)
-IP=$(ifconfig "$IFACE" 2>/dev/null | awk '/inet /{print $2; exit}')
-if [ -z "${IP:-}" ]; then
-  echo "Could not determine IPv4 for $IFACE" >&2
-  exit 1
-fi
-
-NET="${IP%.*}.0/24"
-echo "Interface $IFACE IP: $IP"
-echo "Scanning network $NET for hosts with port $PORT open..."
-
-# find hosts with port open
-mapfile -t HOSTS < <( nmap -Pn -p "$PORT" --open -oG - "$NET" \
-  | awk '/Ports:/{ if($0 ~ /\/open\//) print $2 }' )
-
-if [ ${#HOSTS[@]} -eq 0 ]; then
-  echo "No hosts with port $PORT open found in $NET"
-  exit 0
-fi
-
-echo "Found hosts:"
-printf '  %s\n' "${HOSTS[@]}"
-
-trap 'echo; echo "Interrupted — exiting."; exit 0' INT TERM
-
 rand_int() {
   local range=$((MAX - MIN + 1))
   echo $(( MIN + RANDOM % range ))
@@ -43,7 +18,7 @@ rand_int() {
 while true; do
   sleep "$(rand_int)"
 
-  TARGET=${HOSTS[$(( RANDOM % ${#HOSTS[@]} ))]}
+  TARGET=$FTP_IP
   echo "Attempting FTP upload to $TARGET ..."
 
   # unique name each time (UTC timestamp + random)
