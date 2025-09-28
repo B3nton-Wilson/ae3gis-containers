@@ -54,4 +54,4 @@ EXPOSE 139 445 22
 
 # Use tini as PID 1, then run our entrypoint
 ENTRYPOINT ["/usr/bin/tini", "--", "/opt/smb/entrypoint.sh"]
-CMD ["smbd", "--foreground", "--no-process-group"]
+CMD ["/bin/bash", "-l"]

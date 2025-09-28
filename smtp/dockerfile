@@ -67,4 +67,10 @@ RUN install -d -m 700 -o vmail -g vmail /var/mail/vhosts/${MAIL_DOMAIN}/${MAIL_U
 
 EXPOSE 22 25
 
-CMD ["sh", "-c", "rsyslogd && /usr/sbin/sshd && exec postfix start-fg"]
+COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 22 25
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/bin/bash", "-l"]

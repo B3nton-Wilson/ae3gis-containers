@@ -54,3 +54,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 21 ${PASV_MIN}-${PASV_MAX} 22
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/bin/bash", "-l"]

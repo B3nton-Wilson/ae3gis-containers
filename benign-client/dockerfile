@@ -38,4 +38,4 @@ RUN mkdir /var/run/sshd && \
 EXPOSE 22
 
 # Start services: rsyslog and sshd
-CMD ["sh", "-c", "rsyslogd && exec /usr/sbin/sshd -D"]
+CMD ["sh", "-c", "rsyslogd && /usr/sbin/sshd && exec bash -l"]

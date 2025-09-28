@@ -1,23 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Allow overriding share path with a volume
+# Prepare share directory
 mkdir -p "${SMB_SHARE_PATH}"
 chmod 0775 "${SMB_SHARE_PATH}"
 
-# Create a matching UNIX account (no shell / no home) for Samba auth
+# Ensure UNIX + Samba user exist
 if ! id -u "${SMB_USER}" >/dev/null 2>&1; then
-  useradd -M -s /usr/sbin/nologin "${SMB_USER}" || true
+  useradd -M -s /bin/bash "${SMB_USER}" || true
 fi
-
-# Set the UNIX password (not strictly required for Samba, but harmless)
 echo "${SMB_USER}:${SMB_PASS}" | chpasswd
-
-# Create Samba user (non-interactive)
 (echo "${SMB_PASS}"; echo "${SMB_PASS}") | smbpasswd -s -a "${SMB_USER}"
 smbpasswd -e "${SMB_USER}"
 
-# Build the share section dynamically from env
+# Build dynamic share definition
 cat >/etc/samba/shares.conf <<EOF
 [${SMB_SHARE_NAME}]
    path = ${SMB_SHARE_PATH}
@@ -29,16 +25,23 @@ cat >/etc/samba/shares.conf <<EOF
    create mask = 0664
    directory mask = 0775
 EOF
+grep -q "include = /etc/samba/shares.conf" /etc/samba/smb.conf || echo -e "\ninclude = /etc/samba/shares.conf" >> /etc/samba/smb.conf
 
-# Include our dynamic shares
-if ! grep -q "include = /etc/samba/shares.conf" /etc/samba/smb.conf; then
-  echo -e "\ninclude = /etc/samba/shares.conf" >> /etc/samba/smb.conf
-fi
-
-# Fix perms so user can write
+# Fix perms
 chown -R "${SMB_USER}:${SMB_USER}" "${SMB_SHARE_PATH}"
 
+# Start services in background
+rsyslogd
 /usr/sbin/sshd
+/usr/sbin/smbd --foreground --no-process-group &
+# /usr/sbin/nmbd --foreground --no-process-group &   # optional, if you want NetBIOS
 
-# Exec smbd in foreground (via CMD)
-exec "$@"
+# Show IPs on console
+ip -4 addr show || true
+
+# Exec user-supplied command or a login shell
+if [[ $# -gt 0 ]]; then
+  exec "$@"
+else
+  exec /bin/bash -l
+fi
